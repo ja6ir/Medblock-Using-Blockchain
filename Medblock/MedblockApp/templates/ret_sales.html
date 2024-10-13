@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>MedBlock</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <style>
+    .modal-backdrop {
+        z-index: 1055 !important;
+    }
+
+    .modal {
+        z-index: 1060 !important;
+    }
+</style>
+
+  <!-- Font and CSS Dependencies -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/fonts/icomoon/style.css">
+  <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/fonts/flaticon/font/flaticon.css">
+  <link rel="stylesheet" href="/static/css/magnific-popup.css">
+  <link rel="stylesheet" href="/static/css/jquery-ui.css">
+  <link rel="stylesheet" href="/static/css/owl.carousel.min.css">
+  <link rel="stylesheet" href="/static/css/owl.theme.default.min.css">
+  <link rel="stylesheet" href="/static/css/aos.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+  <div class="site-wrap">
+
+    <!-- Navbar Section -->
+    <div class="site-navbar py-2">
+      <div class="search-wrap">
+        <div class="container">
+          <a href="#" class="search-close js-search-close"><span class="icon-close2"></span></a>
+          <form action="#" method="post">
+            <input type="text" class="form-control" placeholder="Search keyword and hit enter...">
+          </form>
+        </div>
+      </div>
+
+      <div class="container">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="logo">
+            <div class="site-logo">
+              <a href="index.html" class="js-logo-clone"><strong class="text-primary">Med</strong>Block</a>
+            </div>
+          </div>
+          <div class="main-nav d-none d-lg-block">
+            <nav class="site-navigation text-right text-md-center" role="navigation">
+              <ul class="site-menu js-clone-nav d-none d-lg-block">
+                <li ><a href="{%url 'ret_home'%}">Home</a></li>
+                <li ><a href="{%url 'ret_products'%}">Parcel</a></li>
+                <li class="active"><a href="{%url 'ret_sales'%}">Sales</a></li>
+                <li ><a href="{% url 'unit_verification' %}">Verification</a></li>
+                <li ><a href="{% url 'logout' %}">Logout</a></li>
+              </ul>
+            </nav>
+          </div>
+          <div class="icons">
+            <a href="#" class="icons-btn d-inline-block js-search-open"><span class="icon-search"></span></a>
+            <a href="cart.html" class="icons-btn d-inline-block bag">
+              <span class="icon-shopping-bag"></span>
+              <span class="number">2</span>
+            </a>
+            <a href="#" class="site-menu-toggle js-menu-toggle ml-3 d-inline-block d-lg-none"><span class="icon-menu"></span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="site-blocks-cover overlay">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12 mx-auto align-self-center">
+            <div class="site-block-cover-content text-center">
+              <h1 class="mb-0">Hello <strong class="text-primary">Manufacturer</strong></h1>
+              <div class="row justify-content-center mb-5">
+                <div class="col-lg-6 text-center">
+                  <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Facilis ex perspiciatis non quibusdam vel quidem.</p>
+                </div>
+              </div>
+              <p><button id="start-scan" class="btn btn-primary px-5 py-3">Scan QR</button></p>
+              <p>
+                <a href="{% url 'add_units' %}">
+                  <button id="product" class="btn btn-primary px-5 py-3">Go To Products</button>
+                </a>
+              </p>
+              <div class="qr-container" style="display: grid; justify-content: center;">
+                <div id="qr-reader" style="width: 500px; justify-self: center;"></div>
+                <p id="result" style="display: none;"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard and Billing Section -->
+    <div class="site-section bg-image overlay">
+      <div class="container">
+        <div class="row justify-content-center text-center">
+          <div class="col-lg-7">
+            <h3 class="text-white"><strong>Dashboard</strong></h3><br>
+          </div>
+        </div>
+
+        <div class="site-section">
+          <div class="container">
+            <div class="row">
+              <div class="col-md-12">
+                <h2 class="h3 mb-3 text-white">Billing</h2>
+                <div class="p-3 p-lg-5 border">
+                  <form id="billing-form" method="POST" action="">
+                    {% csrf_token %}
+                    <!-- Customer Information -->
+                    <div class="form-group row">
+                      <label for="cust_email" class="text-white">Customer Email</label>
+                      <input type="email" id="cust_email" name="cust_email" class="form-control" required>
+                    </div>
+
+                    <!-- Product Selection Section -->
+                    <div class="form-group row">
+                      <button type="button" id="add-product" class="btn btn-primary">Add Product</button>
+                    </div>
+                    <input type="hidden" id="selected-units" name="selected_units" value="">
+                    <!-- Billing Dashboard: Display added products here -->
+                    <div class="table-responsive">
+                      <table class="table table-bordered text-white">
+                        <thead>
+                          <tr>
+                            <th>Product Name</th>
+                            <th>Unit ID</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody id="billing-dashboard">
+                          <!-- Dynamic rows for added products will go here -->
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <!-- Display Total Price -->
+                    <div class="form-group row">
+                      <label class="col-md-3 text-white">Total Amount</label>
+                      <div class="col-md-6">
+                        <p class="text-white" id="total-amount">$0.00</p>
+                      </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg btn-block">Submit</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal for selecting products and units -->
+        <div class="modal" id="product-modal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="productModalLabel">Select Product and Units</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div class="form-group">
+                  <label for="product-select">Select Product</label>
+                  <select class="form-control" id="product-select">
+                    {% for product in products %}
+                    <option value="{{ product.id }}" data-price="{{ product.price }}">{{ product.name }} (Price: ${{ product.price }})</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="unit-select">Select Unit</label>
+                  <select class="form-control" id="unit-select"></select>
+                </div>
+
+              <div class="modal-footer">
+                <button type="button" id="add-to-bill" class="btn btn-primary">Add to Bill</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Embed bill data as a JSON object if available -->
+
+
+    <!-- Footer Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script src="/static/js/main.js"></script>
+    {% if messages %}
+    {% for msg in messages %}
+    <script>alert('{{msg}}')</script>
+    {% endfor %}
+    {% endif %}
+    <script>
+      
+      $(document).ready(function () {
+        const productData = {
+          {% for product in products %}
+          "{{ product.id }}": {
+            name: "{{ product.name }}",
+            price: {{ product.price }},
+            units: [
+              {% for unit in product.units %}
+              { unit_id: "{{ unit.unit_id }}" },
+              {% endfor %}
+            ]
+          },
+          {% endfor %}
+        };
+
+        let totalAmount = 0;
+        let addedItems = [];
+
+        // Add Product button click handler - open modal
+        $('#add-product').on('click', function () {
+          // Clear previous modal selections
+          $('#product-select').val('');
+          $('#unit-select').empty();
+
+          // Show modal for selecting product and units
+          $('#product-modal').modal({
+    backdrop: false
+});
+        });
+
+        // Populate units when product is selected in the modal
+        $('#product-select').on('change', function () {
+          const productId = $(this).val();
+          const unitSelect = $('#unit-select');
+          unitSelect.empty();
+
+          if (productId) {
+            const units = productData[productId].units;
+            
+            units.forEach(unit => {
+              if (!addedItems.includes(unit.unit_id)) {
+                unitSelect.append(new Option(`Unit ID: ${unit.unit_id}`, unit.unit_id));}
+            });
+          }
+        });
+
+        // Add selected product and unit to the billing dashboard
+        $('#add-to-bill').on('click', function () {
+          const productId = $('#product-select').val();
+          const unitId = $('#unit-select').val();
+          const productName = productData[productId].name;
+          const price = productData[productId].price;
+
+          if (!productId || !unitId) {
+            alert('Please select a product, unit.');
+            return;
+          }
+          addedItems.push(unitId);
+          $('#selected-units').val(JSON.stringify(addedItems));
+
+          // Add product details to the billing dashboard
+          const billingDashboard = $('#billing-dashboard');
+          const rowTotal = price 
+
+          const row = $(`
+            <tr>
+              <td>${productName}</td>
+              <td>${unitId}</td>
+              <td>$${price.toFixed(2)}</td>
+              <td>$${rowTotal.toFixed(2)}</td>
+              <td><button type="button" class="btn btn-danger remove-item">Remove</button></td>
+            </tr>
+          `);
+
+          billingDashboard.append(row);
+
+          // Update total amount
+          totalAmount += rowTotal;
+          $('#total-amount').text(`$${totalAmount.toFixed(2)}`);
+
+          // Close the modal
+          $('#product-modal').modal('hide');
+
+          // Remove item handler
+          row.find('.remove-item').on('click', function () {
+            row.remove();
+            totalAmount -= rowTotal;
+            $('#total-amount').text(`$${totalAmount.toFixed(2)}`);
+          });
+        });
+      });
+
+      
+
+      // QR Code Scanner Script
+      function onScanSuccess(qrCodeMessage) {
+        document.getElementById("result").innerHTML = qrCodeMessage;
+      }
+
+      var html5QrcodeScanner = new Html5QrcodeScanner(
+        "qr-reader", { fps: 10, qrbox: 250 });
+      html5QrcodeScanner.render(onScanSuccess);
+    </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+  const billData = {{ bill|safe }};
+  document.addEventListener('DOMContentLoaded', function () {
+    // Check if billData is defined and not null
+    if (typeof billData !== 'undefined' && billData) {
+      generateBillPDF(billData);
+    }
+  });
+
+  function generateBillPDF(bill) {
+    // Extract data from the bill object
+    const trackingNumber = bill.tracking_number || 'N/A';
+    const retailerName = bill.retailer_name || 'N/A';
+    const retailerEmail = bill.retailer_email || 'N/A';
+    const customerEmail = bill.customer_email || 'N/A';
+    const totalPrice = bill.total_price || 0;
+    const items = bill.items || [];
+
+    // Create a new jsPDF instance
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Set the title
+    doc.setFontSize(18);
+    doc.text('Invoice', 105, 20, null, null, 'center');
+
+    // Retailer and customer details
+    doc.setFontSize(12);
+    doc.text(`Retailer Name: ${retailerName}`, 20, 40);
+    doc.text(`Retailer Email: ${retailerEmail}`, 20, 50);
+    doc.text(`Customer Email: ${customerEmail}`, 20, 60);
+    doc.text(`Tracking Number: ${trackingNumber}`, 20, 70);
+
+    // Table header
+    doc.text('Item Name', 20, 90);
+    doc.text('Unit ID', 90, 90);
+    doc.text('Price', 140, 90);
+    doc.text('Total', 160, 90);
+
+    // Add items to the table
+    let y = 100;
+    items.forEach(item => {
+      const itemName = item.product_name || 'N/A';
+      const unitId = item.unit_id || 'N/A';
+      const price = item.price || 0;
+      const total = item.total || 0;
+
+      doc.text(itemName, 20, y);
+      doc.text(unitId, 90, y);
+      doc.text(`$${price.toFixed(2)}`, 140, y);
+      doc.text(`$${total.toFixed(2)}`, 160, y);
+      y += 10;
+    });
+
+    // Display total price
+    doc.text(`Total Price: $${totalPrice.toFixed(2)}`, 20, y + 10);
+
+    // Automatically open the PDF in a new window/tab
+    doc.output('dataurlnewwindow');
+
+    // Provide an option for the user to download the PDF
+    const downloadButton = document.createElement('button');
+    downloadButton.textContent = 'Download Invoice PDF';
+    downloadButton.classList.add('btn', 'btn-primary');
+    downloadButton.onclick = () => doc.save(`Invoice_${trackingNumber}.pdf`);
+
+    // Append the button to the body or a specific container
+    document.body.appendChild(downloadButton);
+  }
+</script>
+
+
+
+</body>
+
+</html>

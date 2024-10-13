@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>MedBlock &mdash; Colorlib Template</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="fonts/icomoon/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/fonts/flaticon/font/flaticon.css">
+  <link rel="stylesheet" href="/static/css/magnific-popup.css">
+  <link rel="stylesheet" href="/static/css/jquery-ui.css">
+  <link rel="stylesheet" href="/static/css/owl.carousel.min.css">
+  <link rel="stylesheet" href="/static/css/owl.theme.default.min.css">
+
+
+  <link rel="stylesheet" href="/static/css/aos.css">
+
+  <link rel="stylesheet" href="/static/css/style.css">
+
+</head>
+
+<body>
+
+  <div class="site-wrap">
+
+
+    <div class="site-navbar py-2">
+
+      <div class="search-wrap">
+        <div class="container">
+          <a href="#" class="search-close js-search-close"><span class="icon-close2"></span></a>
+          <form action="#" method="post">
+            <input type="text" class="form-control" placeholder="Search keyword and hit enter...">
+          </form>
+        </div>
+      </div>
+
+      <div class="container">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="logo">
+            <div class="site-logo">
+              <a href="index.html" class="js-logo-clone"><strong class="text-primary">Med</strong>Block</a>
+            </div>
+          </div>
+          <div class="main-nav d-none d-lg-block">
+            <nav class="site-navigation text-right text-md-center" role="navigation">
+              <ul class="site-menu js-clone-nav d-none d-lg-block">
+                <li ><a href="{%url 'mf_home'%}">Home</a></li>
+                <li class="active"><a href="{%url 'add_units'%}">Products</a></li>
+                <li ><a href="{%url 'mf_shipments'%}">Shipments</a></li>
+                <li ><a href="{% url 'unit_verification' %}">Verification</a></li>
+                <li ><a href="{% url 'logout' %}">Logout</a></li>
+              </ul>
+            </nav>
+          </div>
+          <div class="icons">
+            <a href="#" class="icons-btn d-inline-block js-search-open"><span class="icon-search"></span></a>
+            <a href="cart.html" class="icons-btn d-inline-block bag">
+              <span class="icon-shopping-bag"></span>
+              <span class="number">2</span>
+            </a>
+            <a href="#" class="site-menu-toggle js-menu-toggle ml-3 d-inline-block d-lg-none"><span
+                class="icon-menu"></span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+
+    <div class="bg-light py-3">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12 mb-0"><a href="index.html">Home</a> <span class="mx-2 mb-0">/</span> <strong class="text-black">Store</strong></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="site-section bg-light">
+      <div class="container">
+        
+        <div style="display: grid; justify-self: flex-end;" >
+            <button id="addbutton" class="btn btn-primary btn-md px-4">
+        <i class="fas fa-plus"></i> Click to add products
+    </button>
+        </div>
+        <div class="row" style="display: none;" id = "form">
+            <div class="col-md-6 mb-5 mb-md-0">
+              <h2 class="h3 mb-3 text-black">Add your products details</h2>
+              <div class="p-3 p-lg-5 border">
+                <form id="form-container" method="post" action="{% url 'add_products' %}" enctype="multipart/form-data">
+                  {% csrf_token %}
+                      <div class="form-group row">
+                          <div class="col-md-12">
+                              <label for="p_name" class="text-black">Product Name <span class="text-danger">*</span></label>
+                              <input type="text" class="form-control" id="p_name" name="p_name" required>
+                          </div>
+                      </div>
+              
+                      <div class="form-group row">
+                          <div class="col-md-12">
+                              <label for="photo" class="text-black">Photo <span class="text-danger">*</span></label>
+                              <input type="file" class="form-control" id="photo" name="photo" required></textarea>
+                          </div>
+                      </div>
+  
+                      <div class="form-group row">
+                          <div class="col-md-12">
+                              <label for="price" class="text-black">Price <span class="text-danger">*</span></label>
+                              <input type="number" class="form-control" id="price" name="price" required>
+                          </div>
+                      </div>
+  
+                      <div class="form-group row">
+                        <div class="col-md-12">
+                            <label for="description" class="text-black">Description <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="description" name="description" required>
+                        </div>
+                    </div>
+                      <div class="form-group row">
+                          <div class="col-md-12">
+                              <button type="submit" class="btn btn-primary btn-lg btn-block">Submit</button>
+                          </div>
+                      </div>
+                  </form>
+              </div>
+      
+      
+              </div>
+            </div>
+  </div>
+</div>
+</div><br><br><br>
+    
+<div class="row">
+  {% if products %}
+      {% for product in products %}
+          <div class="col-sm-6 col-lg-4 text-center item mb-4 item-v2">
+              {% if product.is_on_sale %}
+                  <span class="onsale">Sale</span>
+              {% endif %}
+              <a href="{{ product.get_absolute_url }}">
+                <img src="{{ product.photo.url }}" alt="{{ product.name }}" class="product-image" style="width: 100%; height: auto; min-height: 200px; object-fit: cover; border-radius: 8px; overflow: hidden;">
+
+              </a>
+              <h3 class="text-dark">
+                  <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+              </h3>
+              <p class="price">
+                  ${{ product.price }}
+              </p>
+          </div>
+      {% endfor %}
+  {% else %}
+      <div class="col-12 text-center">
+          <p>No products added.</p>
+      </div>
+  {% endif %}
+</div>
+      
+      </div>
+    </div>
+    <footer class="site-footer bg-light">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6 col-lg-4 mb-4 mb-lg-0">
+  
+            <div class="block-7">
+              <h3 class="footer-heading mb-4">About <strong class="text-primary">MedBlock</strong></h3>
+              <p>MedBlock is a blockchain platform enhancing transparency and security in the pharmaceutical supply chain, ensuring authentic product distribution from manufacturers to customers.</p>
+            </div>
+  
+          </div>
+          <div class="col-lg-3 mx-auto mb-5 mb-lg-0">
+            <h3 class="footer-heading mb-4">Navigation</h3>
+            <ul class="list-unstyled">
+              
+              <ul class="site-menu js-clone-nav d-none d-lg-block">
+                <li ><a href="/">Home</a></li>
+                
+                <li ><a href="/mf-login/">Manufacturer</a></li>
+                <li ><a href="/dist-login/">Distributer</a></li>
+                <li><a href="/ret-login/">Retailer</a></li>
+                <li><a href="/cust-login/">Customers</a></li>
+              </ul>
+          
+            </ul>
+          </div>
+  
+          <div class="col-md-6 col-lg-3">
+            <div class="block-5 mb-5">
+              <h3 class="footer-heading mb-4">Contact Info</h3>
+              <ul class="list-unstyled">
+                <li class="address">Akshaya & Arunima</li>
+                <li class="phone"><a href="tel://23923929210">+91 9897754367</a></li>
+                <li class="email">contact@medblock.com</li>
+              </ul>
+            </div>
+  
+  
+          </div>
+        </div>
+        <div class="row pt-5 mt-5 text-center">
+          <div class="col-md-12">
+            <p>
+              
+               All rights reserved | MedBlock
+  
+              
+            </p>
+          </div>
+  
+        </div>
+      </div>
+    </footer>
+  </div>
+  <script>
+    const form = document.getElementById('form');
+    const AddButton = document.getElementById('addbutton');
+
+    AddButton.addEventListener('click', () => {
+        AddButton.style.display = 'none';
+        form.style.display = 'flex';
+    });
+</script>
+{% if messages %}
+{% for msg in messages %}
+<script>alert('{{msg}}')</script>
+{% endfor %}
+{% endif %}
+  <script src="/static/js/jquery-3.3.1.min.js"></script>
+  <script src="/static/js/jquery-ui.js"></script>
+  <script src="/static/js/popper.min.js"></script>
+  <script src="/static/js/bootstrap.min.js"></script>
+  <script src="/static/js/owl.carousel.min.js"></script>
+  <script src="/static/js/jquery.magnific-popup.min.js"></script>
+  <script src="/static/js/aos.js"></script>
+
+  <script src="/static/js/main.js"></script>
+
+</body>
+
+</html>
