@@ -1,5 +1,7 @@
 # MedBlock: Blockchain-based Medicine Tracking System
 
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
 ## Project Overview
 
 MedBlock is a blockchain-based application system designed to detect and prevent counterfeit medicines in the pharmaceutical supply chain. By utilizing blockchain technology, MedBlock ensures the authenticity of medicines and guarantees their safe journey from manufacturer to patient. The system creates an immutable and transparent record of medication movement, providing visibility and verification to all stakeholders in the pharmaceutical ecosystem.
