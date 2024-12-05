@@ -91,25 +91,30 @@
           </div>
           <div class="icons">
             <a href="#" class="icons-btn d-inline-block js-search-open"><span class="icon-search"></span></a>
-            <a href="cart.html" class="icons-btn d-inline-block bag">
-              <span class="icon-shopping-bag"></span>
-              <span class="number">2</span>
-            </a>
+            
             <a href="#" class="site-menu-toggle js-menu-toggle ml-3 d-inline-block d-lg-none"><span class="icon-menu"></span></a>
           </div>
         </div>
       </div>
     </div>
-
+<br><br>
     <div class="site-blocks-cover overlay">
       <div class="container">
         <div class="row">
           <div class="col-lg-12 mx-auto align-self-center">
             <div class="site-block-cover-content text-center">
+              <br><br>
               <div class="verification-container">
                 <h3 class="text-primary">Verify Unit Authenticity</h3>
+                <p>
+                  <button id="start-scan" class="btn btn-primary px-5 py-3" style="border: solid;">
+                      Scan
+                  </button>
+                <div id="qr-reader-modal" style="width: 100%;"></div>
+              </p>  
                 <form method="POST" action="{% url 'unit_verification' %}">
                   {% csrf_token %}
+                  
                   <div class="form-group">
                     <label for="unit_id">Enter Unit ID:</label>
                     <input type="text" id="unit_id" name="unit_id" required>
@@ -153,6 +158,50 @@
     </div>
 
   </div>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script>
+    const startScanButton = document.getElementById('start-scan');
+    const qrReader = new Html5Qrcode("qr-reader-modal");
+    const unitSelect = $('#unit_id');  // jQuery object for unit select
+
+
+    startScanButton.addEventListener('click', () => {
+        startScanButton.style.display = 'none';
+        qrReader.start({ facingMode: "environment" }, {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+        },
+        (decodedText, decodedResult) => {
+            // Parse the JSON data from the QR code
+            try {
+                const qrData = JSON.parse(decodedText);
+                console.log(decodedText);
+                    if (qrData.unit_id) {
+                    unitSelect.val(qrData.unit_id);
+                }
+
+
+                // Close the QR scanner after successful scan
+                qrReader.stop().then(() => {
+                    startScanButton.style.display = 'inline-block';
+                });
+
+                
+
+            } catch (e) {
+                console.error("Failed to parse QR code data", e);
+                alert("Invalid QR code format. Please try again.");
+            }
+        },
+        (errorMessage) => {
+        }).catch(err => {
+            console.error(`Unable to start scanning, error: ${err}`);
+            startScanButton.style.display = 'inline-block';
+        });
+    });
+</script>
 
 </body>
 

@@ -11,6 +11,12 @@ from hashlib import sha256
 from django.utils import timezone
 from django.db.models import Q
 
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import Color,black, gray
+import io
+import qrcode
+import zipfile
 import uuid
 
 def index(request):
@@ -108,25 +114,45 @@ def add_units(request):
         expiration_date = request.POST.get('e_date')
         product = get_object_or_404(Product, id=product_id)
         manufacturer_id = request.session.get('id')
-        manufacturer = get_object_or_404(Manufacturer, id=manufacturer_id)
 
-        for _ in range(quantity):
-            unit = Unit(product=product, e_date=expiration_date)
-            unit.save()
-            unit.refresh_from_db()
-            # Prepare the block data
-            block_data = {
-                'unit_id': unit.id,
-                'product_id': unit.product.id,
-                'action': "Manufactured",
-                'manufacturer_id' : request.session["id"],
-                'timestamp': datetime.now(UTC).isoformat(), 
-                'expiry':expiration_date
-            }
-            create_blockchain_entry(block_data)
+        # Create an in-memory ZIP file to hold all the QR code images
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+            for _ in range(quantity):
+                unit = Unit(product=product, e_date=expiration_date)
+                unit.save()
+                unit.refresh_from_db()
 
-        messages.success(request, 'Units added and blockchain updated.')
-        return redirect('add_units')
+                # Prepare block data for blockchain
+                block_data = {
+                    'unit_id': unit.id,
+                    'product_id': unit.product.id,
+                    'action': "Manufactured",
+                    'manufacturer_id' : manufacturer_id,
+                    'timestamp': datetime.now(UTC).isoformat(), 
+                    'expiry': expiration_date
+                }
+                create_blockchain_entry(block_data)
+
+                # Generate QR code data and image
+                qr_data = json.dumps({'productName': product.name, 'productId': product_id, 'unit_id': unit.id})
+                qr = qrcode.make(qr_data)
+
+                # Save the QR code image to an in-memory file
+                qr_image_buffer = io.BytesIO()
+                qr.save(qr_image_buffer, format='PNG')
+                qr_image_buffer.seek(0)
+
+                # Add the QR code image to the ZIP file
+                zip_file.writestr(f"QR_code_unit_{unit.id}.png", qr_image_buffer.getvalue())
+
+        # Finalize the ZIP file
+        zip_buffer.seek(0)
+        
+        # Return the ZIP file as a downloadable response
+        response = HttpResponse(zip_buffer, content_type="application/zip")
+        response['Content-Disposition'] = 'attachment; filename="unit_qr_codes.zip"'
+        return response
 
     products = Product.objects.filter(manufacturer__id=request.session.get('id'))
     return render(request, 'add_units.html', {'products': products})
@@ -584,15 +610,11 @@ def ret_sales(request):
             if product.id not in bill_items:
                 bill_items[product.id] = {
                     "item_name": product.name,
-                    "quantity": 1,  # Starts with 1 unit
+                    "unit_id": unit.id, 
                     "price": price,
                     "total": price
                 }
-            else:
-                # If product already exists in the bill, update its quantity and total
-                bill_items[product.id]["quantity"] += 1
-                bill_items[product.id]["total"] += price
-
+        
             # Blockchain update for each unit
             block_data = {
                 "unit_id": unit.id,
@@ -610,19 +632,102 @@ def ret_sales(request):
 
         # Generate bill data
         bill_data = {
-            "tracking_number": tracking_number,
+            "tracking_number": str(tracking_number),  # Convert UUID to string
             "retailer_name": retailer.name,
             "retailer_email": retailer.email,
             "customer_email": cust_email,
-            "total_price": total_price,
-            "items": list(bill_items.values()),  # Convert bill_items dict to list for rendering
+            "total_price": float(total_price),  # Convert Decimal to float
+            "items": [
+                {
+                    
+                    "item_name": item["item_name"],
+                    "unit_id": item["unit_id"],
+                    "price": float(item["price"]),  # Convert Decimal to float
+                    "total": float(item["total"])  # Convert Decimal to float
+                }
+                for item in bill_items.values()
+            ]
         }
 
-        messages.success(request, 'Shipment created and added to blockchain successfully.')
+        # Generate the PDF in a buffer
+        buffer = io.BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+
+        # Main Heading "MedBlock" centered
+        p.setFont("Helvetica-Bold", 36)
+        p.setFillColor(Color(75/255, 178/255, 57/255))  # Set color to green
+        medblock_text = "MedBlock"
+        text_width = p.stringWidth(medblock_text, "Helvetica-Bold", 36)
+        p.drawString((width - text_width) / 2, height - 50, "Med")
+        p.setFillColor(gray)  # Set color to gray for "Block"
+        p.drawString((width - text_width) / 2 + p.stringWidth("Med", "Helvetica-Bold", 36), height - 50, "Block")
+
+        # Subtitle centered
+        p.setFont("Helvetica", 12)
+        subtitle_text = "Securely Tracking Every Pill, From Pharmacy to Patient."
+        subtitle_width = p.stringWidth(subtitle_text, "Helvetica", 12)
+        p.setFillColor(black)  # Set color to black for the subtitle
+        p.drawString((width - subtitle_width) / 2, height - 80, subtitle_text)
+
+        # Invoice Heading centered
+        p.setFont("Helvetica-Bold", 24)
+        invoice_text = "Invoice"
+        invoice_width = p.stringWidth(invoice_text, "Helvetica-Bold", 24)
+        p.drawString((width - invoice_width) / 2, height - 120, invoice_text)
+
+        # Retailer and customer details
+        p.setFont("Helvetica", 12)
+        p.setFillColor(black)
+        p.drawString(50, height - 160, f"Retailer Name: {bill_data['retailer_name']}")
+        p.drawString(50, height - 180, f"Retailer Email: {bill_data['retailer_email']}")
+        p.drawString(50, height - 200, f"Customer Email: {bill_data['customer_email']}")
+        p.drawString(50, height - 220, f"Tracking Number: {bill_data['tracking_number']}")
+
+        # Table header
+        y = height - 260
+        p.setFillColor(Color(0, 0, 0))  # Set text color to white
+        p.drawString(55, y, "Item Name")
+        p.drawString(230, y, "Unit ID")
+        p.drawString(330, y, "Price")
+        p.drawString(430, y, "Total")
+        y -= 20
+
+        # Draw border for the table rows
+        table_height = (len(bill_data["items"]) * 20) + 20
+        p.setFillColor(black)
+
+        # Add items to the table
+        for item in bill_data["items"]:
+            p.drawString(55, y, item["item_name"])
+            p.drawString(230, y, str(item["unit_id"]))
+            p.drawString(330, y, f"${item['price']:.2f}")
+            p.drawString(430, y, f"${item['total']:.2f}")
+            y -= 20
+
+        # Display total price
+        p.drawString(50, y - 20, f"Total Price: ${bill_data['total_price']:.2f}")
+
+        # Finish the PDF
+        p.showPage()
+        p.save()
+
+        # Get the PDF data from the buffer
+        buffer.seek(0)
+
+
+        # Create the response
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Invoice_{bill_data["tracking_number"]}.pdf"'
+
+        # Add a success message
+        messages.success(request, 'Product Sold and added to blockchain successfully.')
+
+        # Return the response to download the PDF
+        return response
 
 
 
-        return render(request, 'ret_sales.html', {'bill': bill_data, 'products': product_data})
 
     # Handle GET request
     
